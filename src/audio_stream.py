@@ -2,30 +2,34 @@
 ## Imports
 from config import *
 import threading
+import pyaudiowpatch as pyaudio
+import numpy as np
 
 # AudioStream class to handle audio input from a device
 class AudioStream:
-	def __init__(self, device_index: int, rate: int, chunk: int, channels: int):
+	def __init__(self, device_index: int, rate: int, chunk: int):
 		""" Initialize the audio stream with the given parameters\n
 		Args:
 			device_index	(int):	Index of the audio device to use
 			rate			(int):	Sample rate (Hz)
 			chunk			(int):	Buffer size
-			channels		(int):	Number of channels
 		"""
 		# Initialize the audio stream
 		self.p: pyaudio.PyAudio = pyaudio.PyAudio()
 
 		# Check if the device supports the specified number of channels
-		device_info: pyaudio.PaDeviceInfo = self.p.get_device_info_by_index(device_index)
-		max_input_channels: int = device_info.get("maxInputChannels", 0)
-		if channels > max_input_channels:
-			raise ValueError(f"Device '{device_info['name']}' supports only {max_input_channels} channel(s), {channels} channel(s) requested!")
+		device_info: pyaudio._PaDeviceInfo = self.p.get_device_info_by_index(device_index)
+		self.channels: int = device_info.get("maxInputChannels", 0)
+		if self.channels == 0:
+			message: str = f"Device '{device_info['name']}' does not support input channels!"
+			raise ValueError(message)
+		else:
+			print(f"Device '{device_info['name']}' supports {self.channels} input channels")
 
 		# Open the audio stream
 		self.stream: pyaudio.Stream = self.p.open(
 			format = FORMAT,
-			channels = channels,
+			channels = self.channels,
 			rate = rate,
 			input = True,
 			frames_per_buffer = chunk,
@@ -33,7 +37,7 @@ class AudioStream:
 		)
 
 		# Initialize the frames and threading lock
-		self.frames: list[bytes] = []
+		self.frames: bytes = b""
 		self.lock: threading.Lock = threading.Lock()
 
 		# Set the running flag to False
@@ -50,11 +54,21 @@ class AudioStream:
 		while self.is_running:
 
 			# Read the audio data from the stream
-			data: bytes = self.stream.read(CHUNK, exception_on_overflow=False)
+			data: bytes = self.stream.read(CHUNK_SIZE, exception_on_overflow = False)
+
+			if self.channels > 1:
+				# Convert byte data to numpy array
+				audio_data: np.ndarray = np.frombuffer(data, np.int16)
+
+				# Force the audio data to be mono
+				mono_data: np.ndarray = audio_data.reshape(-1, self.channels).mean(axis = 1).astype(np.int16)
+
+				# Convert the mono data back to bytes
+				data: bytes = mono_data.tobytes()
 
 			# Store the audio data in the frames list
 			with self.lock:
-				self.frames.append(data)
+				self.frames += data
 
 	def stop(self) -> None:
 		""" Stop the audio thread and close the audio stream """
@@ -67,10 +81,10 @@ class AudioStream:
 		self.stream.close()
 		self.p.terminate()
 
-	def get_frames(self) -> list[bytes]:
+	def get_frames(self) -> bytes:
 		""" Get the frames stored in the audio stream and clear the frames list """
 		with self.lock:
-			frames: list[bytes] = self.frames.copy()
-			self.frames = []
+			frames: bytes = self.frames
+			self.frames = b""
 		return frames
 

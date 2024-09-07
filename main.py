@@ -40,64 +40,77 @@ def main():
 	# Initialize the audio streams
 	audio_streams: dict[str, dict] = {}
 	if recorder_index is not None:
-		audio_streams["recorder"] = {"stream": AudioStream(recorder_index, RATE, CHUNK, CHANNELS)}
+		audio_streams["recorder"] = {"stream": AudioStream(recorder_index, RATE, CHUNK_SIZE)}
 	if playback_index is not None:
-		audio_streams["playback"] = {"stream": AudioStream(playback_index, RATE, CHUNK, CHANNELS)}
+		audio_streams["playback"] = {"stream": AudioStream(playback_index, RATE, CHUNK_SIZE), "threshold": 100}	# Threshold for playback is lower as it is usually quieter
 	
 	# Start the audio streams
 	for stream in audio_streams.values():
 		stream["stream"].start()
 
 	# Variables for silence detection
-	silence_chunks: float = SILENCE_DURATION * RATE / CHUNK		# Number of chunks needed to reach the silence duration
-	minimum_chunks: float = MINIMUM_DURATION * RATE / CHUNK		# Number of chunks needed to reach the minimum duration
+	chunks_per_second: float = RATE * 2								# Number of chunks per second
+	silence_time: float = 0.25										# Time to sleep between each iteration
+	minimum_chunks: float = MINIMUM_DURATION * chunks_per_second	# Number of chunks needed to reach the minimum duration
+	maximum_chunks: float = MAXIMUM_DURATION * chunks_per_second	# Number of chunks needed to reach the maximum duration
+	no_silence: int = -10000000										# Value to avoid saving the same silence multiple times
 	for stream in audio_streams.values():
-		stream["silence_counter"] = 0
+		stream["silence_counter"] = no_silence
 		stream["saved_files"] = 0
-		stream["chunks_to_join"] = []
+		stream["chunks_to_join"] = b""
+		if not stream.get("threshold"):
+			stream["threshold"] = SILENCE_THRESHOLD
+	info(f"Chunks per second: {chunks_per_second} - Silence time: {silence_time} - Minimum chunks: {minimum_chunks} - Maximum chunks: {maximum_chunks}")
 	
 	# Start the main loop
 	debug("Starting the main loop, press Ctrl+C to stop the application...")
 	try:
 		while True:
 			saved_files_on_this_iteration: int = 0
-			
+
 			# Sleep for a short time
-			time.sleep(0.01)
+			time.sleep(silence_time)
 
 			# Check the audio streams
 			for name, items in audio_streams.items():
 				stream: AudioStream = items["stream"]
 
 				# Get frames and append them to the already stored frames
-				frames: list[bytes] = stream.get_frames()
-				items["chunks_to_join"] += frames
+				frames: bytes = stream.get_frames()
+					
+				# Check if the audio is silent
+				if is_silent(frames, threshold = items["threshold"]):
+					if items["silence_counter"] != no_silence:
+						items["silence_counter"] += silence_time
+						if DEBUG_MODE:
+							debug(f"Silence detected on the '{name}' stream (counter: {items['silence_counter']})")
+				else:
+					items["chunks_to_join"] += frames
+					items["silence_counter"] = 0
+					if DEBUG_MODE:
+						debug(f"Audio detected on the '{name}' stream (adding {len(frames)} chunks to join, now {len(items['chunks_to_join'])} chunks)")
 				
-				# Check if the stream has frames
-				if len(frames) > 0:
-					
-					# Check if the audio is silent
-					if is_silent(frames):
-						items["silence_counter"] += 1
-					else:
-						items["silence_counter"] = 0
-					
-					# Check if the silence duration is reached
-					if items["silence_counter"] >= silence_chunks:
+				# Check if the silence duration is reached
+				if items["silence_counter"] >= SILENCE_DURATION:
+					items["chunks_to_join"] += frames
 
-						# If the minimum duration is reached, save the audio to a file
-						if len(items["chunks_to_join"]) >= minimum_chunks:
+					# If the minimum duration is reached, save the audio to a file
+					if len(items["chunks_to_join"]) >= minimum_chunks:
 
-							# Save the audio to a file
-							debug(f"Silence detected on the {name} stream, saving the audio...")
-							items["saved_files"] += 1
-							filename: str = f"{name}_{items['saved_files']}.wav"
-							save_audio(items["chunks_to_join"], filename)
-							saved_files_on_this_iteration += 1
+						# Save the audio to a file
+						if not DEBUG_MODE:
+							debug(f"Silence detected on the '{name}' stream, saving the audio...")
+						else:
+							debug(f"Silence detected on the '{name}' stream, saving the audio ({len(items['chunks_to_join'])} chunks > {minimum_chunks} chunks)...")
+						items["saved_files"] += 1
+						filename: str = f"{name}_{items['saved_files']}.wav"
+						save_audio(items["chunks_to_join"], filename)
+						saved_files_on_this_iteration += 1
+						debug(f"Audio saved to '{filename}' for the '{name}' stream")
 
-						# Reset the silence counter and the chunks to join
-						items["silence_counter"] = 0
-						items["chunks_to_join"] = []
+					# Reset the silence counter and the chunks to join
+					items["silence_counter"] = no_silence
+					items["chunks_to_join"] = b""
 			
 			# Transcription of the saved files
 			if saved_files_on_this_iteration > 0:
