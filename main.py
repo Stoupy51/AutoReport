@@ -47,6 +47,7 @@ def main():
 	for stream in audio_streams.values():
 		stream["silence_counter"] = 0
 		stream["saved_files"] = 0
+		stream["chunks_to_join"] = []
 	
 	# Start the main loop
 	debug("Starting the main loop, press Ctrl+C to stop the application...")
@@ -60,9 +61,12 @@ def main():
 			# Check the audio streams
 			for name, items in audio_streams.items():
 				stream: AudioStream = items["stream"]
+
+				# Get frames and append them to the already stored frames
+				frames: list[bytes] = stream.get_frames()
+				stream["chunks_to_join"] += frames
 				
 				# Check if the stream has frames
-				frames: list[bytes] = stream.get_frames()
 				if len(frames) > 0:
 					
 					# Check if the audio is silent
@@ -78,11 +82,12 @@ def main():
 						# Save the audio to a file
 						items["saved_files"] += 1
 						filename: str = f"{name}_{items['saved_files']}.wav"
-						save_audio(frames, filename)
+						save_audio(stream["chunks_to_join"], filename)
 						saved_files_on_this_iteration += 1
 
-						# Reset the silence counter
+						# Reset the silence counter and the chunks to join
 						items["silence_counter"] = 0
+						items["chunks_to_join"] = []
 			
 			# Transcription of the saved files
 			if saved_files_on_this_iteration > 0:
