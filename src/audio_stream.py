@@ -15,6 +15,14 @@ class AudioStream:
 		"""
 		# Initialize the audio stream
 		self.p: pyaudio.PyAudio = pyaudio.PyAudio()
+
+		# Check if the device supports the specified number of channels
+		device_info: pyaudio.PaDeviceInfo = self.p.get_device_info_by_index(device_index)
+		max_input_channels: int = device_info.get("maxInputChannels", 0)
+		if channels > max_input_channels:
+			raise ValueError(f"Device '{device_info['name']}' supports only {max_input_channels} channel(s), {channels} channel(s) requested!")
+
+		# Open the audio stream
 		self.stream: pyaudio.Stream = self.p.open(
 			format = FORMAT,
 			channels = channels,

@@ -9,6 +9,12 @@ from src.audio_utils import is_silent, save_audio, find_device
 def main():
 	START_TIME: float = time.perf_counter()			# Start time of the application
 
+	# Make folders if they do not exist
+	if not os.path.exists(TRANSCRIPT_FOLDER):
+		os.makedirs(TRANSCRIPT_FOLDER)
+	if not os.path.exists(AUDIO_FOLDER):
+		os.makedirs(AUDIO_FOLDER)
+
 	# Initialize the audio port
 	p: pyaudio.PyAudio = pyaudio.PyAudio()
 
@@ -44,6 +50,7 @@ def main():
 
 	# Variables for silence detection
 	silence_chunks: float = SILENCE_DURATION * RATE / CHUNK		# Number of chunks needed to reach the silence duration
+	minimum_chunks: float = MINIMUM_DURATION * RATE / CHUNK		# Number of chunks needed to reach the minimum duration
 	for stream in audio_streams.values():
 		stream["silence_counter"] = 0
 		stream["saved_files"] = 0
@@ -64,7 +71,7 @@ def main():
 
 				# Get frames and append them to the already stored frames
 				frames: list[bytes] = stream.get_frames()
-				stream["chunks_to_join"] += frames
+				items["chunks_to_join"] += frames
 				
 				# Check if the stream has frames
 				if len(frames) > 0:
@@ -77,13 +84,16 @@ def main():
 					
 					# Check if the silence duration is reached
 					if items["silence_counter"] >= silence_chunks:
-						debug(f"Silence detected on the {name} stream, saving the audio...")
-						
-						# Save the audio to a file
-						items["saved_files"] += 1
-						filename: str = f"{name}_{items['saved_files']}.wav"
-						save_audio(stream["chunks_to_join"], filename)
-						saved_files_on_this_iteration += 1
+
+						# If the minimum duration is reached, save the audio to a file
+						if len(items["chunks_to_join"]) >= minimum_chunks:
+
+							# Save the audio to a file
+							debug(f"Silence detected on the {name} stream, saving the audio...")
+							items["saved_files"] += 1
+							filename: str = f"{name}_{items['saved_files']}.wav"
+							save_audio(items["chunks_to_join"], filename)
+							saved_files_on_this_iteration += 1
 
 						# Reset the silence counter and the chunks to join
 						items["silence_counter"] = 0

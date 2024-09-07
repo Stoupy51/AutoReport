@@ -14,6 +14,7 @@ def is_silent(data: list[bytes], threshold: int = SILENCE_THRESHOLD) -> bool:
 		bool: True if the mean volume is below the threshold, False otherwise
 	"""
 	# Convert the audio data to a numpy array
+	data: bytes = b''.join(data)
 	audio_data: np.ndarray = np.frombuffer(data, np.int16)
 
 	# Return True if the mean volume is below the threshold
