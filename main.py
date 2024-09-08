@@ -4,16 +4,25 @@ from config import *
 from src.print import *
 from src.audio_stream import AudioStream
 from src.audio_utils import is_silent, save_audio, find_device
+from src.transcript_utils import manage_new_audios
 
 # Main function
 def main():
 	START_TIME: float = time.perf_counter()			# Start time of the application
+	START_TIME_STR: str = time.strftime("%Y-%m-%d_%H-%M-%S", time.localtime(START_TIME))
+
+	# Ask to delete previous audio and transcript folders
+	if os.path.exists(TRANSCRIPT_FOLDER) or os.path.exists(AUDIO_FOLDER):
+		if input("Do you want to delete the previous audio and transcript folders? (y/N) ").lower() == "y":
+			import shutil
+			for folder in [TRANSCRIPT_FOLDER, AUDIO_FOLDER]:
+				if os.path.exists(folder):
+					shutil.rmtree(folder)
+					info(f"Folder '{folder}' deleted!")
 
 	# Make folders if they do not exist
-	if not os.path.exists(TRANSCRIPT_FOLDER):
-		os.makedirs(TRANSCRIPT_FOLDER)
-	if not os.path.exists(AUDIO_FOLDER):
-		os.makedirs(AUDIO_FOLDER)
+	for folder in [TRANSCRIPT_FOLDER, AUDIO_FOLDER, OUTPUT_FOLDER]:
+		os.makedirs(folder, exist_ok = True)
 
 	# Initialize the audio port
 	p: pyaudio.PyAudio = pyaudio.PyAudio()
@@ -49,7 +58,7 @@ def main():
 		stream["stream"].start()
 
 	# Variables for silence detection
-	chunks_per_second: float = RATE * 2								# Number of chunks per second
+	chunks_per_second: float = RATE									# Number of chunks per second
 	silence_time: float = 0.25										# Time to sleep between each iteration
 	minimum_chunks: float = MINIMUM_DURATION * chunks_per_second	# Number of chunks needed to reach the minimum duration
 	maximum_chunks: float = MAXIMUM_DURATION * chunks_per_second	# Number of chunks needed to reach the maximum duration
@@ -65,8 +74,9 @@ def main():
 	# Start the main loop
 	debug("Starting the main loop, press Ctrl+C to stop the application...")
 	try:
+		saved_files_on_this_iteration: int = 0
+		time_since_last_report: float = 0
 		while True:
-			saved_files_on_this_iteration: int = 0
 
 			# Sleep for a short time
 			time.sleep(silence_time)
@@ -105,8 +115,8 @@ def main():
 						items["saved_files"] += 1
 						filename: str = f"{name}_{items['saved_files']}.wav"
 						save_audio(items["chunks_to_join"], filename)
-						saved_files_on_this_iteration += 1
 						debug(f"Audio saved to '{filename}' for the '{name}' stream")
+						saved_files_on_this_iteration += 1
 
 					# Reset the silence counter and the chunks to join
 					items["silence_counter"] = no_silence
@@ -114,7 +124,15 @@ def main():
 			
 			# Transcription of the saved files
 			if saved_files_on_this_iteration > 0:
-				pass	# TODO: Add the transcription part here
+				saved_files_on_this_iteration = 0	# Reset the counter
+				manage_new_audios(START_TIME_STR)		# Manage the new audio files
+
+				# Update the report if needed
+				now: float = time.perf_counter()
+				if (now - time_since_last_report) >= UPDATE_REPORT_EVERY_X_SECONDS:
+					time_since_last_report = now
+					pass	# TODO: Update the report here
+
 
 				
 	

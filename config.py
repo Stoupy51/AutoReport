@@ -4,13 +4,14 @@ import os
 import pyaudiowpatch as pyaudio
 
 # Basic configuration here
-LANGUAGE: str = "fr"							# Language of the audio files and transcripts
+LANGUAGE: str = "fr-FR"							# Language of the audio files and transcripts, an RFC5646 language tag like 'en-US' or 'fr-FR'
 KEEP_TRANSCRIPTS: bool = True					# Keep generated transcripts files
 KEEP_AUDIO_FILES: bool = False					# Keep generated audio files
 UPDATE_REPORT_EVERY_X_SECONDS: int = 60			# Update the report every X seconds (0 to disable: only update at the end of the transcription)
 ENABLE_PLAYBACK_DEVICE: bool = True				# Enable the playback device (if False, only the recording device will be used)
 DEBUG_MODE: bool = True							# Enable debug mode (more verbose output)
 DEBUG_VOLUME: bool = False						# Enable volume debug mode (show the volume of the audio data in comparison to the threshold)
+MAX_WORDS_PER_LINE: int = 20					# Maximum number of words per line in the transcript
 
 # Technical configuration
 RECORDING_DEVICE_NAME: str = "microphone sur"	# Name of the microphone device to search for
@@ -32,7 +33,4 @@ AUDIO_FOLDER: str = f"{ROOT}/audio"				# Folder where the audio files are stored
 # Configuration for the report generation
 REPORT_EXTENSION: str = "md"					# File extension of the report file (md, txt, ...)
 OUTPUT_FOLDER: str = "output"					# Folder where the reports are stored with format "report_YYYY-MM-DD_HH-MM-SS.md"
-
-# Constants for API calls
-TRANSCRIPT_API_URL: str = ""					# URL of the API to call for the transcription
 
