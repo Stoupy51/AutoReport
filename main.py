@@ -59,7 +59,6 @@ def main():
 
 	# Variables for silence detection
 	chunks_per_second: float = RATE									# Number of chunks per second
-	silence_time: float = 0.25										# Time to sleep between each iteration
 	minimum_chunks: float = MINIMUM_DURATION * chunks_per_second	# Number of chunks needed to reach the minimum duration
 	maximum_chunks: float = MAXIMUM_DURATION * chunks_per_second	# Number of chunks needed to reach the maximum duration
 	no_silence: int = -10000000										# Value to avoid saving the same silence multiple times
@@ -69,7 +68,7 @@ def main():
 		stream["chunks_to_join"] = b""
 		if not stream.get("threshold"):
 			stream["threshold"] = SILENCE_THRESHOLD
-	info(f"Chunks per second: {chunks_per_second} - Silence time: {silence_time} - Minimum chunks: {minimum_chunks} - Maximum chunks: {maximum_chunks}")
+	info(f"Chunks per second: {chunks_per_second} - Silence time: {SLEEP_INTERVAL} - Minimum chunks: {minimum_chunks} - Maximum chunks: {maximum_chunks}")
 	
 	# Start the main loop
 	debug("Starting the main loop, press Ctrl+C to stop the application...")
@@ -79,7 +78,7 @@ def main():
 		while True:
 
 			# Sleep for a short time
-			time.sleep(silence_time)
+			time.sleep(SLEEP_INTERVAL)
 
 			# Check the audio streams
 			for name, items in audio_streams.items():
@@ -91,7 +90,7 @@ def main():
 				# Check if the audio is silent
 				if is_silent(frames, threshold = items["threshold"]):
 					if items["silence_counter"] != no_silence:
-						items["silence_counter"] += silence_time
+						items["silence_counter"] += SLEEP_INTERVAL
 						if DEBUG_MODE:
 							debug(f"Silence detected on the '{name}' stream (counter: {items['silence_counter']})")
 				else:

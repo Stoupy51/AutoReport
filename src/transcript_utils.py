@@ -66,6 +66,13 @@ def manage_new_audios(start_time: str):
 
 		# Call the API to get the transcript
 		transcript: str = call_api(audio_file)
+
+		# Remove the audio file if needed
+		if not KEEP_AUDIO_FILES:
+			os.remove(audio_file)
+			info(f"Audio file '{os.path.basename(audio_file)}' removed successfully!")
+
+		# Skip if the transcript is None
 		if transcript is None:
 			warning(f"Error while calling the API for the audio file '{os.path.basename(audio_file)}', skipping...")
 			continue
@@ -74,11 +81,6 @@ def manage_new_audios(start_time: str):
 		with open(equivalent_transcript, "w", encoding="utf-8") as f:
 			f.write(transcript)
 		info(f"Transcript '{os.path.basename(equivalent_transcript)}' saved successfully!")
-
-		# Remove the audio file if needed
-		if not KEEP_AUDIO_FILES:
-			os.remove(audio_file)
-			info(f"Audio file '{os.path.basename(audio_file)}' removed successfully!")
 	
 	# Make one big transcript
 	make_the_big_transcript(start_time)
