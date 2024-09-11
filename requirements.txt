@@ -3,6 +3,8 @@ PyAudioWPatch
 numpy
 wave
 
-speech_recognition
+SpeechRecognition
 pydub
+
+OpenAI
 

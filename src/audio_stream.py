@@ -74,7 +74,7 @@ class AudioStream:
 		""" Stop the audio thread and close the audio stream """
 		# Stop the thread and join it
 		self.is_running = False
-		self.thread.join()
+		self.thread.join(timeout = 1.0)
 
 		# Stop and close the audio stream
 		self.stream.stop_stream()

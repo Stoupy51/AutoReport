@@ -5,20 +5,17 @@ from src.print import *
 from src.audio_stream import AudioStream
 from src.audio_utils import is_silent, save_audio, find_device
 from src.transcript_utils import manage_new_audios
+from datetime import datetime
 
 # Main function
 def main():
 	START_TIME: float = time.perf_counter()			# Start time of the application
-	START_TIME_STR: str = time.strftime("%Y-%m-%d_%H-%M-%S", time.localtime(START_TIME))
+	START_TIME_STR = datetime.now().strftime("%Y-%m-%d") + "_" + time.strftime("%H-%M-%S", time.localtime(START_TIME))
 
-	# Ask to delete previous audio and transcript folders
-	if os.path.exists(TRANSCRIPT_FOLDER) or os.path.exists(AUDIO_FOLDER):
-		if input("Do you want to delete the previous audio and transcript folders? (y/N) ").lower() == "y":
-			import shutil
-			for folder in [TRANSCRIPT_FOLDER, AUDIO_FOLDER]:
-				if os.path.exists(folder):
-					shutil.rmtree(folder)
-					info(f"Folder '{folder}' deleted!")
+	# If OpenAI API is used but no key is provided, exit the application
+	if USE_OPENAI_API and len(OPENAI_KEYS) == 0:
+		error("No OpenAI API key provided, please add at least one key to the 'open_ai.keys' file or disable the API in the configuration file")
+		return
 
 	# Make folders if they do not exist
 	for folder in [TRANSCRIPT_FOLDER, AUDIO_FOLDER, OUTPUT_FOLDER]:

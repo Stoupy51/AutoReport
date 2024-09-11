@@ -2,9 +2,10 @@
 ## Imports
 from config import *
 from src.print import *
+from src.open_ai import transcript_api
+from pydub import AudioSegment
 import os
 import time
-from pydub import AudioSegment
 import speech_recognition as sr
 
 # Function to make api call
@@ -16,33 +17,37 @@ def call_api(audio_file: str) -> str|None:
 		str: Transcript of the audio file if successful
 	"""
 	try:
-		# Call the API to get the transcript
-		recognizer: sr.Recognizer = sr.Recognizer()
-		with sr.AudioFile(audio_file) as source:
-			audio_data = recognizer.record(source)
-		
-		# Get the transcript
-		try:
-			transcript: str = recognizer.recognize_google(audio_data, language=LANGUAGE)
-
-			# Add a new line every MAX_WORDS_PER_LINE words
-			words: list[str] = transcript.split(" ")
-			for i in range(MAX_WORDS_PER_LINE, len(words), MAX_WORDS_PER_LINE):
-				words.insert(i, "\n")
-			transcript = " ".join(words).replace("\n ", "\n")
-
-			# Return the transcript
-			return transcript
-		except sr.UnknownValueError as e:
-			warning(f"Google Speech Recognition could not understand the audio file '{os.path.basename(audio_file)}': {e}")
-			return None
-		except Exception as e:
-			error(f"Error while recognizing the audio file '{os.path.basename(audio_file)}': {e}", exit = False)
-			return None
+		if USE_OPENAI_API:
+			# Call the OpenAI API to get the transcript
+			transcript: str = transcript_api(audio_file)
+		else:
+			try:
+				# Call the API to get the transcript
+				recognizer: sr.Recognizer = sr.Recognizer()
+				with sr.AudioFile(audio_file) as source:
+					audio_data = recognizer.record(source)
+				transcript: str = recognizer.recognize_google(audio_data, language=LANGUAGE)
+			except sr.UnknownValueError as e:
+				warning(f"Google Speech Recognition could not understand the audio file '{os.path.basename(audio_file)}': {e}")
+				return None
+			except Exception as e:
+				error(f"Error while recognizing the audio file '{os.path.basename(audio_file)}': {e}", exit = False)
+				return None
 
 	except Exception as e:
 		error(f"Error while calling the API for the audio file '{os.path.basename(audio_file)}': {e}", exit = False)
 		return None
+	if transcript is None:
+		return None
+
+	# Add a new line every MAX_WORDS_PER_LINE words
+	words: list[str] = transcript.split(" ")
+	for i in range(MAX_WORDS_PER_LINE, len(words), MAX_WORDS_PER_LINE):
+		words.insert(i, "\n")
+	transcript = " ".join(words).replace("\n ", "\n")
+
+	# Return the transcript
+	return transcript
 
 # Function to manage new audios
 def manage_new_audios(start_time: str):
