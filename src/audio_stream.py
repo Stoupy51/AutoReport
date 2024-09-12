@@ -28,7 +28,7 @@ class AudioStream:
 
 		# Open the audio stream
 		self.stream: pyaudio.Stream = self.p.open(
-			format = FORMAT,
+			format = pyaudio.paInt16,
 			channels = self.channels,
 			rate = rate,
 			input = True,

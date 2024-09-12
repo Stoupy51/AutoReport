@@ -2,30 +2,8 @@
 ## Imports
 from config import *
 from src.print import *
-import numpy as np
+import pyaudiowpatch as pyaudio
 import wave
-
-# Silence detection function
-def is_silent(data: bytes, threshold: int = SILENCE_THRESHOLD) -> bool:
-	""" Check if the mean volume of the audio data is below the threshold\n
-	Args:
-		data		(bytes):	Audio data
-		threshold	(int):		Threshold for silence detection
-	Returns:
-		bool: True if the mean volume is below the threshold, False otherwise
-	"""
-	if not data:
-		return True
-	
-	# Convert the audio data to a numpy array
-	audio_data: np.ndarray = np.frombuffer(data, np.int16)
-
-	# Return True if the mean volume is below the threshold
-	volume: float = np.abs(audio_data).mean()
-	if DEBUG_VOLUME:
-		debug(f"Volume: {volume:.2f} (Threshold: {threshold})")
-	return volume < threshold
-
 
 # Audio saving function
 def save_audio(frames: bytes, filename: str, rate: int = RATE) -> None:
@@ -45,7 +23,7 @@ def save_audio(frames: bytes, filename: str, rate: int = RATE) -> None:
 	# Open the WAV file and write the frames
 	with wave.open(filepath, 'wb') as wf:
 		wf.setnchannels(1)
-		wf.setsampwidth(pyaudio.PyAudio().get_sample_size(FORMAT))
+		wf.setsampwidth(pyaudio.PyAudio().get_sample_size(pyaudio.paInt16))
 		wf.setframerate(rate)
 		wf.writeframes(frames)
 

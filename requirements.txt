@@ -1,10 +1,9 @@
 
-PyAudioWPatch
 numpy
-wave
-
 SpeechRecognition
-pydub
-
+flask
+flask-socketio
 OpenAI
+wave
+PyAudioWPatch
 

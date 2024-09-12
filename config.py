@@ -1,7 +1,6 @@
 
 ## Configuration file for the application
 import os
-import pyaudiowpatch as pyaudio
 
 # Basic configuration here
 LANGUAGE: str = "fr-FR"							# Language of the audio files and transcripts, an RFC5646 language tag like 'en-US' or 'fr-FR'
@@ -16,7 +15,6 @@ MAX_WORDS_PER_LINE: int = 20					# Maximum number of words per line in the trans
 # Technical configuration
 RECORDING_DEVICE_NAME: str = "microphone sur"	# Name of the microphone device to search for
 PLAYBACK_DEVICE_NAME: str = "casque pour"		# Name of the speakers device to search for (must have input capabilities, e.g., "Stereo Mix")
-FORMAT = pyaudio.paInt16						# Sample format
 RATE = 48000									# Sample rate (Hz)
 CHUNK_SIZE = 1024								# Buffer size
 SILENCE_THRESHOLD: int = 650					# Threshold for silence detection (to adjust depending on ambient noise)
@@ -24,6 +22,7 @@ SILENCE_DURATION: float = 0.6					# Duration (in seconds) of the pause needed to
 MINIMUM_DURATION: float = 1.2					# Minimum duration (in seconds) of a sentence in the audio file
 MAXIMUM_DURATION: float = 30.0					# Maximum duration (in seconds) of a sentence in the audio file
 SLEEP_INTERVAL: float = 0.2						# Time to sleep between each iteration of the main loop (in seconds)
+SERVER_PORT: int = 14444						# Port of the server (if used)
 
 # Folders
 ROOT: str = os.path.dirname(os.path.abspath(__file__)).replace("\\", "/")	# Root folder of the application (where the py files are located)
@@ -35,7 +34,7 @@ REPORT_EXTENSION: str = "md"					# File extension of the report file (md, txt, .
 OUTPUT_FOLDER: str = "output"					# Folder where the reports are stored with format "report_YYYY-MM-DD_HH-MM-SS.md"
 
 # OpenAI API configuration
-USE_OPENAI_API: bool = True						# Use the OpenAI API to generate the transcripts and the report (requires API keys)
+USE_OPENAI_API: bool = False						# Use the OpenAI API to generate the transcripts and the report (requires API keys)
 OPENAI_API_KEYS: str = f"{ROOT}/open_ai.keys"	# Path to a file containing a list of API keys to use (one per line), if the first one is exhausted, the next one will be used
 OPENAI_KEYS: list[str] = []						# List of API keys to use
 with open(OPENAI_API_KEYS, "r") as f:

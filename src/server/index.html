@@ -1,0 +1,78 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Live Audio Stream</title>
+</head>
+<body>
+	<h1>Live Audio Stream</h1>
+	<button id="start_record_btn">Start Streaming</button>
+	<button id="stop_record_btn" disabled>Stop Streaming</button>
+	<button id="new_iteration_btn">New Iteration</button>
+	<button id="request_report_btn">Request Full Report</button>
+	<p id="transcript"></p>
+	<p id="report"></p>
+
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
+	<script type="text/javascript" charset="utf-8">
+		// Variables
+		let mediaRecorder;		// MediaRecorder instance to capture audio
+		let socket;				// WebSocket instance to send audio data to the server
+
+		// Setup an event listener that will run on click
+		document.getElementById('start_record_btn').addEventListener('click', () => {
+
+			// Open a Socket.IO connection
+			socket = io();
+
+			// Handle messages received from the server
+			socket.on('transcript', function(event) {
+				const transcript = event.data;
+				if (transcript != "")
+					document.getElementById('transcript').innerText = 'Transcript: ' + transcript;
+			});
+
+			// Request microphone access
+			navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+				mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+				
+				document.getElementById('start_record_btn').disabled = true;
+				document.getElementById('stop_record_btn').disabled = false;
+
+				mediaRecorder.ondataavailable = function(event) {
+					if (event.data.size > 0) {
+						socket.emit('audio_stream', event.data);
+					}
+				};
+
+				mediaRecorder.start(200);  // Record in chunks every 200ms
+			});
+		});
+
+		// Stop recording and close WebSocket connection
+		document.getElementById('stop_record_btn').addEventListener('click', () => {
+			mediaRecorder.stop();
+			socket.close();
+			document.getElementById('start_record_btn').disabled = false;
+			document.getElementById('stop_record_btn').disabled = true;
+		});
+
+		// New iteration button event, sending a get request to the '/new_iteration' endpoint
+		document.getElementById('new_iteration_btn').addEventListener('click', () => {
+			fetch('/new_iteration')
+				.then(response => response.text())
+				.then(data => alert(data));
+		});
+
+		// Request full report button event, sending a get request to the '/request_report' endpoint
+		document.getElementById('request_report_btn').addEventListener('click', () => {
+			fetch('/request_report')
+				.then(response => response.text())
+				.then(data => document.getElementById('report').innerText = 'Report: ' + data);
+		});
+	</script>
+</body>
+</html>
+

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Stream Recorder</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.0/socket.io.js"></script>
+</head>
+<body>
+    <h1>Audio Stream Recorder</h1>
+    <button id="start">Start Recording</button>
+    <button id="stop" disabled>Stop Recording</button>
+
+    <script>
+        const socket = io.connect('http://localhost:5000');
+        let mediaRecorder;
+        let audioChunks = [];
+
+        document.getElementById('start').onclick = async function() {
+            document.getElementById('start').disabled = true;
+            document.getElementById('stop').disabled = false;
+
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+
+            mediaRecorder.ondataavailable = function(event) {
+                if (event.data.size > 0) {
+                    audioChunks.push(event.data);
+                    socket.emit('audio_chunk', event.data);  // Send audio data to server
+                }
+            };
+
+            mediaRecorder.start(1000);  // Send audio chunks every 1 second
+        };
+
+        document.getElementById('stop').onclick = function() {
+            document.getElementById('stop').disabled = true;
+            document.getElementById('start').disabled = false;
+
+            mediaRecorder.stop();
+        };
+    </script>
+</body>
+</html>

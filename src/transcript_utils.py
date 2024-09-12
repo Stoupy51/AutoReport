@@ -3,16 +3,15 @@
 from config import *
 from src.print import *
 from src.open_ai import transcript_api
-from pydub import AudioSegment
-import os
-import time
 import speech_recognition as sr
+import io
+import os
 
 # Function to make api call
-def call_api(audio_file: str) -> str|None:
+def call_api(audio_file: str|bytes) -> str|None:
 	""" Call the API to get the transcript of the audio file\n
 	Args:
-		audio_file (str): Path to the audio file
+		audio_file (str|bytes): Path to the audio file or the audio data
 	Returns:
 		str: Transcript of the audio file if successful
 	"""
@@ -24,7 +23,7 @@ def call_api(audio_file: str) -> str|None:
 			try:
 				# Call the API to get the transcript
 				recognizer: sr.Recognizer = sr.Recognizer()
-				with sr.AudioFile(audio_file) as source:
+				with sr.AudioFile(audio_file if isinstance(audio_file, str) else io.BytesIO(audio_file)) as source:
 					audio_data = recognizer.record(source)
 				transcript: str = recognizer.recognize_google(audio_data, language=LANGUAGE)
 			except sr.UnknownValueError as e:
@@ -50,10 +49,12 @@ def call_api(audio_file: str) -> str|None:
 	return transcript
 
 # Function to manage new audios
-def manage_new_audios(start_time: str):
+def manage_new_audios(start_time: str) -> str:
 	""" Manage the new audio files in the audio folder\n
 	Args:
 		start_time (str): Start time of the application (for the report generation)
+	Returns:
+		str: The big transcript
 	"""
 	# Get the list of audio files ordered by creation date
 	audio_files: list[str] = [f"{AUDIO_FOLDER}/{f}" for f in os.listdir(AUDIO_FOLDER) if f.endswith(".wav")]
@@ -88,14 +89,15 @@ def manage_new_audios(start_time: str):
 		info(f"Transcript '{os.path.basename(equivalent_transcript)}' saved successfully!")
 	
 	# Make one big transcript
-	make_the_big_transcript(start_time)
+	return make_the_big_transcript(start_time)
 
 
 # Function to make one big transcript
-def make_the_big_transcript(start_time: str) -> str:
+def make_the_big_transcript(start_time: str, keep_transcripts: bool = KEEP_TRANSCRIPTS) -> str:
 	""" Make one big transcript from the audio files
 	Args:
-		start_time (str): Start time of the application (for the report generation)
+		start_time			(str):	Start time of the application (for the report generation)
+		keep_transcripts	(bool):	If the transcript files should be kept
 	Returns:
 		str: The big transcript
 	"""
@@ -121,17 +123,29 @@ def make_the_big_transcript(start_time: str) -> str:
 			big_transcript += f.read().strip() + "\n"
 		
 		# Remove the transcript file if needed
-		if not KEEP_TRANSCRIPTS:
+		if not keep_transcripts:
 			os.remove(transcript_file)
 			info(f"Transcript file '{os.path.basename(transcript_file)}' removed successfully!")
-		
+	
 	# Save the big transcript to a file
-	with open(f"{OUTPUT_FOLDER}/full_transcript_{start_time}.txt", "w", encoding="utf-8") as f:
-		f.write(big_transcript)
-	info(f"Big transcript 'full_transcript_{start_time}.txt' saved successfully!")
+	path: str = f"{OUTPUT_FOLDER}/full_transcript_{start_time}.txt"
+	if keep_transcripts:
+		with open(path, "w", encoding="utf-8") as f:
+			f.write(big_transcript)
+		info(f"Big transcript 'full_transcript_{start_time}.txt' saved successfully!")
 
-	# Return the big transcript
-	return big_transcript
+		# Return the big transcript
+		return big_transcript
+	
+	else:
+		# Append the big transcript to the file
+		with open(path, "a", encoding="utf-8") as f:
+			f.write(big_transcript)
+		info(f"Big transcript 'full_transcript_{start_time}.txt' appended successfully!")
+
+		# Return the entire content of the file
+		with open(path, "r", encoding="utf-8") as f:
+			return f.read()
 
 
 # Function to make the report
