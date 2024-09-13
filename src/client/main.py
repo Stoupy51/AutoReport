@@ -2,8 +2,10 @@
 ## Imports
 from config import *
 from src.print import *
+from src.folder_utils import move_transcripts_and_audio_files
 from src.audio_stream import AudioStream
-from src.audio_utils import is_silent, save_audio, find_device
+from src.audio_utils import save_audio, find_device
+from src.silence import *
 from src.transcript_utils import manage_new_audios, make_the_report
 from datetime import datetime
 import pyaudiowpatch as pyaudio
@@ -22,13 +24,9 @@ def client_main():
 	# Make folders if they do not exist
 	for folder in [TRANSCRIPT_FOLDER, AUDIO_FOLDER, OUTPUT_FOLDER]:
 		os.makedirs(folder, exist_ok = True)
-	
-	# For the transcript and audio folders, move all the files into a subfolder "unknown"
-	for folder in [TRANSCRIPT_FOLDER, AUDIO_FOLDER]:
-		os.makedirs(f"{folder}/unknown", exist_ok = True)
-		files: list[str] = [f"{folder}/{f}" for f in os.listdir(folder) if os.path.isfile(f"{folder}/{f}") and all([c not in f for c in "/\\"])]
-		for file in files:
-			os.replace(file, f"{folder}/unknown/{os.path.basename(file)}")
+
+	# Move every transcript and audio files in subfolders
+	move_transcripts_and_audio_files(START_TIME, START_TIME_STR)
 
 	# Initialize the audio port
 	p: pyaudio.PyAudio = pyaudio.PyAudio()
@@ -150,11 +148,7 @@ def client_main():
 	make_the_report(START_TIME_STR, not_final=False)
 
 	# Move every transcript and audio files in subfolders
-	for folder in [TRANSCRIPT_FOLDER, AUDIO_FOLDER]:
-		os.makedirs(f"{folder}/{START_TIME_STR}", exist_ok = True)
-		files: list[str] = [f"{folder}/{f}" for f in os.listdir(folder) if os.path.isfile(f"{folder}/{f}") and all([c not in f for c in "/\\"])]
-		for file in files:
-			os.replace(file, f"{folder}/{START_TIME_STR}/{os.path.basename(file)}")
+	move_transcripts_and_audio_files(START_TIME, START_TIME_STR)
 	
 	# End of the application
 	END_TIME: float = time.perf_counter()			# End time of the application

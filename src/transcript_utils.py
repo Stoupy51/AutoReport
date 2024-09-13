@@ -8,12 +8,12 @@ import io
 import os
 
 # Function to make api call
-def call_api(audio_file: str|bytes) -> str|None:
+def call_api(audio_file: str|bytes) -> str:
 	""" Call the API to get the transcript of the audio file\n
 	Args:
 		audio_file (str|bytes): Path to the audio file or the audio data
 	Returns:
-		str: Transcript of the audio file if successful
+		str: Transcript of the audio file
 	"""
 	try:
 		if USE_OPENAI_API:
@@ -28,16 +28,16 @@ def call_api(audio_file: str|bytes) -> str|None:
 				transcript: str = recognizer.recognize_google(audio_data, language=LANGUAGE)
 			except sr.UnknownValueError as e:
 				warning(f"Google Speech Recognition could not understand the audio file '{os.path.basename(audio_file)}': {e}")
-				return None
+				return ""
 			except Exception as e:
 				error(f"Error while recognizing the audio file '{os.path.basename(audio_file)}': {e}", exit = False)
-				return None
+				return ""
 
 	except Exception as e:
 		error(f"Error while calling the API for the audio file '{os.path.basename(audio_file)}': {e}", exit = False)
-		return None
-	if transcript is None:
-		return None
+		return ""
+	if transcript is "":
+		return ""
 
 	# Add a new line every MAX_WORDS_PER_LINE words
 	words: list[str] = transcript.split(" ")
@@ -63,25 +63,20 @@ def manage_new_audios(start_time: str) -> str:
 	# Process the audio files that are not already in the list
 	for audio_file in audio_files:
 		equivalent_transcript: str = f"{TRANSCRIPT_FOLDER}/{os.path.basename(audio_file).replace('.wav', '.txt')}"
-		if DEBUG_MODE:
-			debug(f"Processing the audio file '{audio_file}' with the equivalent transcript '{equivalent_transcript}'")
 		
 		# Check if the transcript already exists
 		if os.path.exists(equivalent_transcript):
 			continue
 
 		# Call the API to get the transcript
+		if DEBUG_MODE:
+			debug(f"Processing the audio file '{os.path.basename(audio_file)}' with the equivalent transcript '{os.path.basename(equivalent_transcript)}'")
 		transcript: str = call_api(audio_file)
 
 		# Remove the audio file if needed
 		if not KEEP_AUDIO_FILES:
 			os.remove(audio_file)
 			info(f"Audio file '{os.path.basename(audio_file)}' removed successfully!")
-
-		# Skip if the transcript is None
-		if transcript is None:
-			warning(f"Error while calling the API for the audio file '{os.path.basename(audio_file)}', skipping...")
-			continue
 
 		# Save the transcript to a file
 		with open(equivalent_transcript, "w", encoding="utf-8") as f:
@@ -120,7 +115,9 @@ def make_the_big_transcript(start_time: str, keep_transcripts: bool = KEEP_TRANS
 		
 		# Add the transcript to the big transcript
 		with open(transcript_file, "r", encoding="utf-8") as f:
-			big_transcript += f.read().strip() + "\n"
+			transcript: str = f.read().strip()
+			if transcript:
+				big_transcript += transcript + "\n"
 		
 		# Remove the transcript file if needed
 		if not keep_transcripts:

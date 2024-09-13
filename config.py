@@ -31,7 +31,7 @@ AUDIO_FOLDER: str = f"{ROOT}/audio"				# Folder where the audio files are stored
 
 # Configuration for the report generation
 REPORT_EXTENSION: str = "md"					# File extension of the report file (md, txt, ...)
-OUTPUT_FOLDER: str = "output"					# Folder where the reports are stored with format "report_YYYY-MM-DD_HH-MM-SS.md"
+OUTPUT_FOLDER: str = f"{ROOT}/output"			# Folder where the reports are stored with format "report_YYYY-MM-DD_HH-MM-SS.md"
 
 # OpenAI API configuration
 USE_OPENAI_API: bool = False						# Use the OpenAI API to generate the transcripts and the report (requires API keys)

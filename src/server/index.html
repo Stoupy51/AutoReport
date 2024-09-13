@@ -28,10 +28,21 @@
 			socket = io();
 
 			// Handle messages received from the server
-			socket.on('transcript', function(event) {
-				const transcript = event.data;
+			socket.on('transcript', function(transcript) {
 				if (transcript != "")
-					document.getElementById('transcript').innerText = 'Transcript: ' + transcript;
+					document.getElementById('transcript').innerText = 'Transcript:\n' + transcript;
+			});
+
+			// Handle disconnection from the server and simulate a click on the stop button
+			socket.on('disconnect', function() {
+				document.getElementById('stop_record_btn').click();
+				alert('Server disconnected');
+			});
+
+			// Handle errors and simulate a click on the stop button
+			socket.on('error', function(error) {
+				document.getElementById('stop_record_btn').click();
+				alert('Error: ' + error);
 			});
 
 			// Request microphone access
