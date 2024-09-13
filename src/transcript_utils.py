@@ -36,7 +36,7 @@ def call_api(audio_file: str|bytes) -> str:
 	except Exception as e:
 		error(f"Error while calling the API for the audio file '{os.path.basename(audio_file)}': {e}", exit = False)
 		return ""
-	if transcript is "":
+	if transcript is None:
 		return ""
 
 	# Add a new line every MAX_WORDS_PER_LINE words
