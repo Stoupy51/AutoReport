@@ -156,6 +156,7 @@ def handle_audio_stream(frames: bytes):
 		total_audio_duration = 0.0
 		start_audio_time = 0.0
 		emit('error', str(e))
+		return
 
 	# Check if the audio is silent
 	silence, volume = is_silent_wav_bytes(converted_frames, current_threshold)
