@@ -166,7 +166,7 @@ def server_main():
 	move_transcripts_and_audio_files(START_TIME, START_TIME_STR)
 
 	# Start the main loop
-	socketio.run(app, port=SERVER_PORT)
+	socketio.run(app, host=SERVER_HOST, port=SERVER_PORT)
 
 	# Move every transcript and audio files in subfolders
 	move_transcripts_and_audio_files(START_TIME, START_TIME_STR)

@@ -22,6 +22,7 @@ SILENCE_DURATION: float = 0.6					# Duration (in seconds) of the pause needed to
 MINIMUM_DURATION: float = 1.2					# Minimum duration (in seconds) of a sentence in the audio file
 MAXIMUM_DURATION: float = 30.0					# Maximum duration (in seconds) of a sentence in the audio file
 SLEEP_INTERVAL: float = 0.2						# Time to sleep between each iteration of the main loop (in seconds)
+SERVER_HOST: str = "0.0.0.0"					# Host of the server (if used)
 SERVER_PORT: int = 14444						# Port of the server (if used)
 
 # Folders
