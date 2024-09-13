@@ -17,7 +17,9 @@
 		<label for="threshold" id="threshold_label">Threshold: </label>
 		<input type="range" id="threshold" min="-100" max="0" value="1" step="1">
 	</div>
+	<h2>Transcript</h2>
 	<p id="transcript"></p>
+	<h2>Report</h2>
 	<p id="report"></p>
 
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
@@ -35,7 +37,7 @@
 			// Handle messages received from the server
 			socket.on('transcript', function(transcript) {
 				if (transcript != "")
-					document.getElementById('transcript').innerText = 'Transcript:\n' + transcript;
+					document.getElementById('transcript').innerText = transcript;
 			});
 
 			// Handle disconnection from the server and simulate a click on the stop button
@@ -58,13 +60,13 @@
 			// Handle threshold received from the server (on start usually)
 			socket.on('threshold', function(threshold) {
 				document.getElementById('threshold').value = threshold;
-				document.getElementById('threshold_label').innerText = 'Threshold: ' + threshold;
+				document.getElementById('threshold_label').innerText = 'Threshold: ' + threshold + ' dB';
 			});
 
 			// Handle threshold change
 			document.getElementById('threshold').addEventListener('change', function() {
 				socket.emit('update_threshold', this.value);
-				document.getElementById('threshold_label').innerText = 'Threshold: ' + this.value;
+				document.getElementById('threshold_label').innerText = 'Threshold: ' + this.value + ' dB';
 			});
 
 			// Request microphone access
@@ -119,7 +121,7 @@
 		document.getElementById('request_report_btn').addEventListener('click', () => {
 			fetch('/request_report')
 				.then(response => response.text())
-				.then(data => document.getElementById('report').innerText = 'Report: ' + data);
+				.then(data => document.getElementById('report').innerText = data);
 		});
 	</script>
 </body>
