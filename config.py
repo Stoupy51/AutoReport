@@ -37,6 +37,7 @@ OUTPUT_FOLDER: str = f"{ROOT}/output"			# Folder where the reports are stored wi
 USE_OPENAI_API: bool = False						# Use the OpenAI API to generate the transcripts and the report (requires API keys)
 OPENAI_API_KEYS: str = f"{ROOT}/open_ai.keys"	# Path to a file containing a list of API keys to use (one per line), if the first one is exhausted, the next one will be used
 OPENAI_KEYS: list[str] = []						# List of API keys to use
-with open(OPENAI_API_KEYS, "r") as f:
-	OPENAI_KEYS += f.read().strip().split("\n")
+if USE_OPENAI_API and os.path.exists(OPENAI_API_KEYS):
+	with open(OPENAI_API_KEYS, "r") as f:
+		OPENAI_KEYS += f.read().strip().split("\n")
 
