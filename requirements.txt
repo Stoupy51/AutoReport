@@ -2,7 +2,8 @@
 numpy
 SpeechRecognition
 flask
-flask-socketio
+flask_socketio
+flask_talisman
 OpenAI
 wave
 PyAudioWPatch
