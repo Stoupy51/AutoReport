@@ -65,9 +65,9 @@ def client_main():
 	chunks_per_second: float = RATE									# Number of chunks per second
 	minimum_chunks: float = MINIMUM_DURATION * chunks_per_second	# Number of chunks needed to reach the minimum duration
 	maximum_chunks: float = MAXIMUM_DURATION * chunks_per_second	# Number of chunks needed to reach the maximum duration
-	no_silence: int = -10000000										# Value to avoid saving the same silence multiple times
+	not_initialized_silence: int = -10000000						# Value to avoid saving the same silence multiple times
 	for stream in audio_streams.values():
-		stream["silence_counter"] = no_silence
+		stream["silence_counter"] = not_initialized_silence
 		stream["saved_files"] = 0
 		stream["joined_chunks"] = b""
 		if not stream.get("threshold"):
@@ -93,7 +93,7 @@ def client_main():
 					
 				# Check if the audio is silent
 				if is_silent(frames, threshold = items["threshold"]):
-					if items["silence_counter"] != no_silence:
+					if items["silence_counter"] != not_initialized_silence:
 						items["silence_counter"] += SLEEP_INTERVAL
 						if DEBUG_MODE:
 							debug(f"Silence detected on the '{name}' stream (counter: {items['silence_counter']})")
@@ -122,7 +122,7 @@ def client_main():
 						saved_files_on_this_iteration += 1
 
 					# Reset the silence counter and the chunks to join
-					items["silence_counter"] = no_silence
+					items["silence_counter"] = not_initialized_silence
 					items["joined_chunks"] = b""
 			
 			# Transcription of the saved files

@@ -33,13 +33,14 @@ def is_silent(data: bytes, threshold: int = SILENCE_THRESHOLD) -> bool:
 
 
 # Silence detection for wav files
-def is_silent_wav_bytes(data: bytes, threshold: float = -85.0) -> bool:
+def is_silent_wav_bytes(data: bytes, threshold: float = -60.0) -> tuple[bool, float]:
 	""" Check if the mean volume of the audio data is below the threshold\n
 	Args:
 		data		(bytes):	Audio data
 		threshold	(float):	Threshold for silence detection (in dB)
 	Returns:
 		bool: True if the mean volume is below the threshold, False otherwise
+		float: The mean volume of the audio data
 	"""
 	if not data:
 		return True
@@ -51,5 +52,5 @@ def is_silent_wav_bytes(data: bytes, threshold: float = -85.0) -> bool:
 	volume = audio.dBFS
 	if DEBUG_VOLUME:
 		debug(f"Volume: {volume:.2f} (Threshold: {threshold})")
-	return volume < threshold
+	return volume < threshold, round(volume, 3)
 

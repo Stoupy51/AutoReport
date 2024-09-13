@@ -12,6 +12,11 @@
 	<button id="stop_record_btn" disabled>Stop Streaming</button>
 	<button id="new_iteration_btn">New Iteration</button>
 	<button id="request_report_btn">Request Full Report</button>
+	<div>
+		<p id="volume">Volume from server: -inf dB</p>
+		<label for="threshold" id="threshold_label">Threshold: </label>
+		<input type="range" id="threshold" min="-100" max="0" value="1" step="1">
+	</div>
 	<p id="transcript"></p>
 	<p id="report"></p>
 
@@ -45,9 +50,42 @@
 				alert('Error: ' + error);
 			});
 
+			// Handle volume received from the server
+			socket.on('volume', function(volume) {
+				document.getElementById('volume').innerText = 'Volume from server: ' + volume + ' dB';
+			});
+
+			// Handle threshold received from the server (on start usually)
+			socket.on('threshold', function(threshold) {
+				document.getElementById('threshold').value = threshold;
+				document.getElementById('threshold_label').innerText = 'Threshold: ' + threshold;
+			});
+
+			// Handle threshold change
+			document.getElementById('threshold').addEventListener('change', function() {
+				socket.emit('update_threshold', this.value);
+				document.getElementById('threshold_label').innerText = 'Threshold: ' + this.value;
+			});
+
 			// Request microphone access
 			navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
-				mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+				mimeTypes = [
+					'audio/webm',
+					'audio/mp4',
+					'audio/wav',
+					'audio/mp3',
+				];
+				for (let mimeType of mimeTypes) {
+					try {
+						mediaRecorder = new MediaRecorder(stream, { mimeType: mimeType });
+						break;	// Break the loop if the MediaRecorder is created successfully
+					} catch (error) {
+						console.log('Error creating MediaRecorder with mimeType: ' + mimeType);
+					}
+				}
+
+				// Send mimeType to the server
+				socket.emit('mimeType', mediaRecorder.mimeType);
 				
 				document.getElementById('start_record_btn').disabled = true;
 				document.getElementById('stop_record_btn').disabled = false;
