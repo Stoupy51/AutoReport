@@ -198,7 +198,7 @@ def handle_audio_stream(frames: bytes):
 			start_audio_time = total_audio_duration
 
 			# Get the big transcript and send it to the client
-			emit('transcript', manage_new_audios(START_TIME_STR))
+			emit('transcript', manage_new_audios(START_TIME_STR).strip())
 		
 
 
