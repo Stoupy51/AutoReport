@@ -8,6 +8,7 @@
 </head>
 <body>
 	<h1>Live Audio Stream</h1>
+	<input id="debug_mode" type="checkbox"> Debug Mode
 	<button id="start_record_btn">Start Streaming</button>
 	<button id="stop_record_btn" disabled>Stop Streaming</button>
 	<button id="new_iteration_btn">New Iteration</button>
@@ -83,7 +84,16 @@
 						break;	// Break the loop if the MediaRecorder is created successfully
 					} catch (error) {
 						console.log('Error creating MediaRecorder with mimeType: ' + mimeType);
+						if (document.getElementById('debug_mode').checked) {
+							alert(error);
+						}
 					}
+				}
+
+				// If the MediaRecorder is not created, show an error message
+				if (!mediaRecorder) {
+					alert('Error creating MediaRecorder');
+					return;
 				}
 
 				// Send mimeType to the server
