@@ -146,18 +146,37 @@ def make_the_big_transcript(start_time: str, keep_transcripts: bool = KEEP_TRANS
 
 
 # Function to make the report
-def make_the_report(start_time: str, not_final: bool = True):
+def make_the_report(start_time: str, not_final: bool = True) -> str:
 	""" Make the report of the application
 	Args:
 		start_time (str): Start time of the application
 		not_final (bool): If the report is not final (if final, we delete the transcript files if needed)
+	Returns:
+		str: The report content
 	"""
 	# Make the big transcript
 	transcript = make_the_big_transcript(start_time)
 
 	# TODO: Use AI to summarize the transcript
+	report: str = ""
 
 
+	# Save the report to a file
+	with open(f"{OUTPUT_FOLDER}/report_{start_time}.{REPORT_EXTENSION}", "w", encoding="utf-8") as f:
+		f.write(report)
+		info(f"Report 'report_{start_time}.{REPORT_EXTENSION}' saved successfully!")
+	
+	# Remove the transcript files if needed
+	if not not_final:
+		if not KEEP_TRANSCRIPTS:
+			for f in os.listdir(TRANSCRIPT_FOLDER):
+				os.remove(f"{TRANSCRIPT_FOLDER}/{f}")
+		if not KEEP_AUDIO_FILES:
+			for f in os.listdir(AUDIO_FOLDER):
+				os.remove(f"{AUDIO_FOLDER}/{f}")
+	
+	# Return the report
+	return report
 
 
 

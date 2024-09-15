@@ -21,7 +21,7 @@ SILENCE_THRESHOLD: int = 650					# Threshold for silence detection (to adjust de
 SILENCE_DURATION: float = 0.6					# Duration (in seconds) of the pause needed to consider a new sentence in the audio file
 MINIMUM_DURATION: float = 1.2					# Minimum duration (in seconds) of a sentence in the audio file
 MAXIMUM_DURATION: float = 30.0					# Maximum duration (in seconds) of a sentence in the audio file
-SLEEP_INTERVAL: float = 0.2						# Time to sleep between each iteration of the main loop (in seconds)
+SLEEP_INTERVAL: float = 0.5						# Time to sleep between each iteration of the main loop (in seconds)
 SERVER_HOST: str = "0.0.0.0"					# Host of the server (if used)
 SERVER_PORT: int = 14444						# Port of the server (if used)
 
@@ -35,7 +35,7 @@ REPORT_EXTENSION: str = "md"					# File extension of the report file (md, txt, .
 OUTPUT_FOLDER: str = f"{ROOT}/output"			# Folder where the reports are stored with format "report_YYYY-MM-DD_HH-MM-SS.md"
 
 # OpenAI API configuration
-USE_OPENAI_API: bool = False						# Use the OpenAI API to generate the transcripts and the report (requires API keys)
+USE_OPENAI_API: bool = False					# Use the OpenAI API to generate the transcripts and the report (requires API keys)
 OPENAI_API_KEYS: str = f"{ROOT}/open_ai.keys"	# Path to a file containing a list of API keys to use (one per line), if the first one is exhausted, the next one will be used
 OPENAI_KEYS: list[str] = []						# List of API keys to use
 if USE_OPENAI_API and os.path.exists(OPENAI_API_KEYS):

@@ -42,15 +42,20 @@ def is_silent_wav_bytes(data: bytes, threshold: float = -60.0) -> tuple[bool, fl
 		bool: True if the mean volume is below the threshold, False otherwise
 		float: The mean volume of the audio data
 	"""
-	if not data:
-		return True
-	
-	# Convert audio to pydub AudioSegment
-	audio: pydub.AudioSegment = pydub.AudioSegment.from_wav(io.BytesIO(data))
+	try:
+		if not data:
+			return True
+		
+		# Convert audio to pydub AudioSegment
+		audio: pydub.AudioSegment = pydub.AudioSegment.from_wav(io.BytesIO(data))
 
-	# Return True if the mean volume is below the threshold
-	volume = audio.dBFS
-	if DEBUG_VOLUME:
-		debug(f"Volume: {volume:.2f} (Threshold: {threshold})")
-	return volume < threshold, round(volume, 3)
+		# Return True if the mean volume is below the threshold
+		volume = audio.dBFS
+		if DEBUG_VOLUME:
+			debug(f"Volume: {volume:.2f} (Threshold: {threshold})")
+		return volume < threshold, round(volume, 3)
+
+	except Exception as e:
+		warning(f"Error while detecting silence in the audio data: {e}")
+		return True, 0.0
 

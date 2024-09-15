@@ -47,10 +47,9 @@
 				alert('Server disconnected');
 			});
 
-			// Handle errors and simulate a click on the stop button
+			// Handle errors by logging them to the console
 			socket.on('error', function(error) {
-				document.getElementById('stop_record_btn').click();
-				alert('Error: ' + error);
+				console.log(error);
 			});
 
 			// Handle volume received from the server
@@ -66,7 +65,7 @@
 
 			// Handle threshold change
 			document.getElementById('threshold').addEventListener('change', function() {
-				socket.emit('update_threshold', this.value);
+				socket.emit('threshold', this.value);
 				document.getElementById('threshold_label').innerText = 'Threshold: ' + this.value + ' dB';
 			});
 
@@ -108,7 +107,7 @@
 					}
 				};
 
-				mediaRecorder.start(200);  // Record in chunks every 200ms
+				mediaRecorder.start(__SLEEP_INTERVAL__);  // Record in chunks with intervals (ms)
 			});
 		});
 

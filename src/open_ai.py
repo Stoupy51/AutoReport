@@ -22,7 +22,7 @@ def transcript_api(audio_file: str|bytes) -> str|None:
 			audio_data: bytes = f.read()
 	else:
 		audio_data: bytes = audio_file
-
+	
 	# Try to get the transcript with the API keys
 	while transcript is None and len(keys) > 0:
 		try:

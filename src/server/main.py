@@ -7,7 +7,6 @@ from src.folder_utils import move_transcripts_and_audio_files
 from src.transcript_utils import *
 from datetime import datetime
 import pydub
-import wave
 import os
 import io
 
@@ -21,17 +20,17 @@ csp = {
 	"script-src": [
 		"'self'",
 		"https://cdnjs.cloudflare.com",
-		"'unsafe-inline'"			# Allow inline scripts
+		"'unsafe-inline'",			# Allow inline scripts
 	],
 	"style-src": [
 		"'self'",
 		"https://cdnjs.cloudflare.com",
-		"'unsafe-inline'"			# Allow inline styles
+		"'unsafe-inline'",			# Allow inline styles
 	],
 	"connect-src": [
 		"'self'",
 		"ws://localhost:" + str(SERVER_PORT),
-		"https://cdnjs.cloudflare.com"
+		"https://cdnjs.cloudflare.com",
 	]
 }
 
@@ -49,7 +48,7 @@ SERVER_FOLDER: str = os.path.dirname(os.path.abspath(__file__)).replace("\\", "/
 
 # Get index page
 with open(f"{SERVER_FOLDER}/index.html", "r") as f:
-	INDEX_PAGE: str = f.read()
+	INDEX_PAGE: str = f.read().replace("__SLEEP_INTERVAL__", str(int(SLEEP_INTERVAL * 1000)))
 
 # Variables for silence detection
 current_threshold: int = -60					# Current threshold for silence detection
@@ -72,7 +71,7 @@ def convert_to_wav(frames: bytes, start_duration: float = 0.0) -> tuple[bytes, f
 	audio: pydub.AudioSegment = pydub.AudioSegment.from_file(bytes_io, format=mimeType.split('/')[-1], start_second=start_duration)
 	with io.BytesIO() as output:
 		audio.export(output, format="wav")
-		return output.getvalue(), len(audio) / 1000
+		return output.getvalue(), audio.duration_seconds
 
 @app.route('/')
 def index():
@@ -142,11 +141,10 @@ def handle_audio_stream(frames: bytes):
 		frames (bytes): Audio data
 	"""
 	global silence_counter, joined_chunks, total_files, total_audio_duration, start_audio_time
-	joined_chunks += frames		# Accumulate the audio frames (mimeType received from the client)
 
 	# Convert the audio to wav
 	try:
-		converted_frames, duration = convert_to_wav(joined_chunks, start_duration = total_audio_duration)
+		converted_frames, duration = convert_to_wav(joined_chunks + frames, start_duration = total_audio_duration)
 		total_audio_duration += duration
 	except Exception as e:
 		# If an error occurs, reset everything and send errors to the client
@@ -157,6 +155,9 @@ def handle_audio_stream(frames: bytes):
 		start_audio_time = 0.0
 		emit('error', str(e))
 		return
+
+	# Accumulate the audio frames (mimeType received from the client)
+	joined_chunks += frames
 
 	# Check if the audio is silent
 	silence, volume = is_silent_wav_bytes(converted_frames, current_threshold)
