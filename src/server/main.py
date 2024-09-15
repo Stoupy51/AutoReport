@@ -6,6 +6,7 @@ from src.silence import *
 from src.folder_utils import move_transcripts_and_audio_files
 from src.transcript_utils import *
 from datetime import datetime
+import zipfile
 import pydub
 import os
 import io
@@ -98,6 +99,24 @@ def new_iteration():
 def request_report():
 	""" Request the report to be generated and send to the client """
 	return make_the_report(START_TIME_STR, not_final = True)
+
+@app.route('/request_outputs')
+def request_outputs():
+	""" Request the outputs to be sent to the client (everything in the output folder) """
+	# Prepare a zip file with the outputs
+	output_zip: str = f"{OUTPUT_FOLDER}/outputs_{START_TIME_STR}.zip"
+	with zipfile.ZipFile(output_zip, 'w') as zipf:
+		for root, _, files in os.walk(OUTPUT_FOLDER):
+			for file in files:
+				if not file.endswith(".zip"):
+					zipf.write(os.path.join(root, file), os.path.relpath(os.path.join(root, file), OUTPUT_FOLDER))
+	
+	# Send the zip file content to the client
+	with open(output_zip, "rb") as f:
+		return f.read()
+	
+	# Remove the zip file
+	os.remove(output_zip)
 
 @socketio.on('connect')
 def handle_connect():

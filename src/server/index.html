@@ -13,6 +13,7 @@
 	<button id="stop_record_btn" disabled>Stop Streaming</button>
 	<button id="new_iteration_btn">New Iteration</button>
 	<button id="request_report_btn">Request Full Report</button>
+	<button id="request_outputs_btn">Request Outputs</button>
 	<div>
 		<p id="volume">Volume from server: -inf dB</p>
 		<label for="threshold" id="threshold_label">Threshold: </label>
@@ -130,7 +131,34 @@
 		document.getElementById('request_report_btn').addEventListener('click', () => {
 			fetch('/request_report')
 				.then(response => response.text())
-				.then(data => document.getElementById('report').innerText = data);
+				.then(data => function() {
+					document.getElementById('report').innerText = data;
+
+					// Download the report as a text file
+					let element = document.createElement('a');
+					element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(data));
+					element.setAttribute('download', 'report.txt');
+					element.style.display = 'none';
+					document.body.appendChild(element);
+					element.click();
+					document.body.removeChild(element);
+				});
+		});
+
+		// Request all reports button event, sending a get request to the '/request_outputs' endpoint
+		document.getElementById('request_outputs_btn').addEventListener('click', () => {
+			fetch('/request_outputs') // Get a .zip file with all the reports
+				.then(response => response.blob())
+				.then(data => {
+					// Download the .zip file
+					let element = document.createElement('a');
+					element.href = URL.createObjectURL(data);
+					element.download = 'outputs.zip';
+					element.style.display = 'none';
+					document.body.appendChild(element);
+					element.click();
+					document.body.removeChild(element);
+				});
 		});
 	</script>
 </body>
