@@ -40,6 +40,7 @@ app: Flask = Flask(__name__)
 Talisman(app, force_https=True, content_security_policy=csp)
 socketio: SocketIO = SocketIO(app, cors_allowed_origins="*")
 joined_chunks: bytes = b''						# To accumulate audio chunks (mimeType received from the client)
+metadata_chunk: bytes = b''						# The metadata chunk, only used for the first chunk
 total_audio_duration: float = 0.0				# Total duration of the audio
 start_audio_time: float = 0.0					# Start time of the audio (updated when the audio is saved to not save the same audio multiple times)
 mimeType: str = "audio/webm"					# MIME type of the audio (webm format by default)
@@ -110,21 +111,24 @@ def request_outputs():
 			for file in files:
 				if not file.endswith(".zip"):
 					zipf.write(os.path.join(root, file), os.path.relpath(os.path.join(root, file), OUTPUT_FOLDER))
-	
-	# Send the zip file content to the client
 	with open(output_zip, "rb") as f:
-		return f.read()
+		to_return: str = f.read()
 	
 	# Remove the zip file
 	os.remove(output_zip)
 
+	# Return the zip file content
+	return to_return
+
 @socketio.on('connect')
 def handle_connect():
 	new_iteration()
-	global joined_chunks, total_audio_duration, start_audio_time
+	global joined_chunks, total_audio_duration, start_audio_time, silence_counter, metadata_chunk
 	joined_chunks = b""
+	metadata_chunk = b""
 	total_audio_duration = 0.0
 	start_audio_time = 0.0
+	silence_counter = not_initialized_silence
 	print("Client connected")
 	emit('threshold', current_threshold)	# Send the current threshold to the client
 
@@ -159,7 +163,11 @@ def handle_audio_stream(frames: bytes):
 	Args:
 		frames (bytes): Audio data
 	"""
-	global silence_counter, joined_chunks, total_files, total_audio_duration, start_audio_time
+	global silence_counter, joined_chunks, total_files, total_audio_duration, start_audio_time, metadata_chunk
+
+	# If this is the first chunk, save the metadata
+	if not metadata_chunk:
+		metadata_chunk = frames
 
 	# Convert the audio to wav
 	try:
@@ -214,8 +222,9 @@ def handle_audio_stream(frames: bytes):
 			audio_segment.export(audio_file, format="wav")
 			info(f"Audio file '{os.path.basename(audio_file)}' saved successfully! Now transcribing...")
 
-			# Reset the start time of the audio
+			# Reset the start time of the audio, and the joined chunks
 			start_audio_time = total_audio_duration
+			joined_chunks = metadata_chunk	# Resets to the metadata chunk
 
 			# Get the big transcript and send it to the client
 			emit('transcript', manage_new_audios(START_TIME_STR).strip())
