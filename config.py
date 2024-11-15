@@ -1,6 +1,7 @@
 
 ## Configuration file for the application
 import os
+os.system("color")
 
 # Basic configuration here
 LANGUAGE: str = "fr-FR"							# Language of the audio files and transcripts, an RFC5646 language tag like 'en-US' or 'fr-FR'
@@ -13,11 +14,11 @@ DEBUG_VOLUME: bool = False						# Enable volume debug mode (show the volume of t
 MAX_WORDS_PER_LINE: int = 20					# Maximum number of words per line in the transcript
 
 # Technical configuration
-RECORDING_DEVICE_NAME: str = "microphone sur"	# Name of the microphone device to search for
-PLAYBACK_DEVICE_NAME: str = "casque pour"		# Name of the speakers device to search for (must have input capabilities, e.g., "Stereo Mix")
+RECORDING_DEVICE_NAME: str = "microphone"		# Name of the microphone device to search for
+PLAYBACK_DEVICE_NAME: str = "haut"				# Name of the speakers device to search for (must have input capabilities, e.g., "Stereo Mix")
 RATE = 48000									# Sample rate (Hz)
 CHUNK_SIZE = 1024								# Buffer size
-SILENCE_THRESHOLD: int = 650					# Threshold for silence detection (to adjust depending on ambient noise)
+SILENCE_THRESHOLD: int = 35						# Threshold for silence detection (to adjust depending on ambient noise)
 SILENCE_DURATION: float = 0.6					# Duration (in seconds) of the pause needed to consider a new sentence in the audio file
 MINIMUM_DURATION: float = 1.2					# Minimum duration (in seconds) of a sentence in the audio file
 MAXIMUM_DURATION: float = 30.0					# Maximum duration (in seconds) of a sentence in the audio file
