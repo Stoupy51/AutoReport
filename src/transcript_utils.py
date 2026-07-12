@@ -2,7 +2,7 @@
 ## Imports
 from config import *
 from src.print import *
-from src.open_ai import transcript_api
+#from src.open_ai import transcript_api
 import speech_recognition as sr
 import io
 import os
@@ -18,7 +18,8 @@ def call_api(audio_file: str|bytes) -> str:
 	try:
 		if USE_OPENAI_API:
 			# Call the OpenAI API to get the transcript
-			transcript: str = transcript_api(audio_file)
+			#transcript: str = transcript_api(audio_file)
+			pass
 		else:
 			try:
 				# Call the API to get the transcript

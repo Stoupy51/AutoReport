@@ -1,0 +1,15 @@
+[project]
+name = "autoreport"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "flask",
+    "flask-socketio",
+    "flask-talisman",
+    "numpy>=2.5.1",
+    "pyaudiowpatch>=0.2.12.8",
+    "pydub>=0.25.1",
+    "speechrecognition",
+]
